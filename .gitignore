@@ -1,0 +1,8 @@
+# Python and test caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+.virtual_documents/

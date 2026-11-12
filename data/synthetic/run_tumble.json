@@ -1,0 +1,36 @@
+{
+  "name": "run_tumble",
+  "description": "Run-and-tumble swimmers (E. coli-like) in a uniform environment. Each cell has its own swimming speed. Tumbles happen at a constant rate.",
+  "synthetic": true,
+  "fps": 30.0,
+  "units": {
+    "t": "s",
+    "x_um": "µm",
+    "y_um": "µm"
+  },
+  "localization_noise_um": 0.2,
+  "n_tracks": 400,
+  "track_duration_s": {
+    "mean": 10.29,
+    "min": 2.0,
+    "max": 40.0
+  },
+  "model": "run_tumble",
+  "model_parameters": {
+    "speed": 25.0,
+    "speed_sd": 4.0,
+    "run_rate": 1.0,
+    "tumble_time": 0.15,
+    "tumble_speed": 0.2,
+    "turn_angle": [
+      68.0,
+      36.0
+    ],
+    "Dr": 0.15
+  },
+  "seed": [
+    5910,
+    1
+  ],
+  "generated_by": "tools/make_synthetic_data.py"
+}

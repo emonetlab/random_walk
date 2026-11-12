@@ -1,0 +1,27 @@
+{
+  "name": "brownian",
+  "description": "Non-swimming cells. Brownian motion with diffusion coefficient D (µm²/s).",
+  "synthetic": true,
+  "fps": 30.0,
+  "units": {
+    "t": "s",
+    "x_um": "µm",
+    "y_um": "µm"
+  },
+  "localization_noise_um": 0.2,
+  "n_tracks": 400,
+  "track_duration_s": {
+    "mean": 10.28,
+    "min": 2.0,
+    "max": 40.0
+  },
+  "model": "brownian",
+  "model_parameters": {
+    "D": 0.35
+  },
+  "seed": [
+    5910,
+    0
+  ],
+  "generated_by": "tools/make_synthetic_data.py"
+}

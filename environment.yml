@@ -1,0 +1,30 @@
+# Conda environment for the MCDB 5910 bacterial motility notebooks.
+# Python 3.12. The lower bounds are the oldest versions we support; we tested numpy 2.5, pandas 3.1, scipy 1.18, matplotlib 3.11.
+#
+#   conda env create -f environment.yml
+#   conda activate mcdb5910
+#   python tools/install_kernel.py
+name: mcdb5910
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  # analysis and figures
+  - numpy>=2,<3
+  - scipy>=1.13
+  - pandas>=2.2
+  - matplotlib>=3.9
+  - seaborn>=0.13
+  - scikit-learn>=1.5
+  # data formats (the course serves datasets in different formats on purpose)
+  - h5py        # HDF5 and MATLAB v7.3 .mat files (scipy.io reads older .mat files)
+  - pyarrow     # Parquet
+  - openpyxl    # Excel
+  # notebooks
+  - jupyterlab>=4
+  - ipykernel
+  - ipywidgets
+  # testing: run the code checks and the notebooks headless
+  - nbclient
+  - nbformat
+  - pytest
