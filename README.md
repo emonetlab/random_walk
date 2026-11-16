@@ -4,10 +4,10 @@ Hands-on material for the bacterial motility module of MCDB 5910 (Day 1, section
 
 | Notebook | Part | What you learn | Run time |
 |---|---|---|---|
-| [`NB1_tracks_to_states`](notebooks/NB1_tracks_to_states.ipynb) | A, B, C | **A** speeds from positions, and how localization noise and smoothing affect them; **B** runs and tumbles in the (speed, angular velocity) state space; **C** velocity and orientation autocorrelations | ~20 s |
-| [`NB2_msd`](notebooks/NB2_msd.ipynb) | D | MSD of Brownian motion, run-and-tumble (constant and OU-driven tumble rate) and the biased random walk: equations of motion, analytic results and simulations, then the datasets | ~1 min |
-| [`NB3_smoothing_window`](notebooks/NB3_smoothing_window.ipynb) | A | Goes with NB1, part A: how the Savitzky–Golay window changes the velocity of a noisy swimming track (noise against blurred tumbles), and how to choose the window. It also writes the interactive explorer `NB3_smoothing_explorer.html` | ~10 s |
-| [`NB_extension`](notebooks/NB_extension.ipynb) | extra | The Lévy walk, and five random walks side by side (random, biased, run-and-tumble, smooth turner, Lévy) with matched parameters | ~1 min |
+| [`NB1_tracks_to_states`](notebooks/NB1_tracks_to_states.ipynb) | A, B, C | **A** speeds from positions, and how localization noise and smoothing affect them; **B** runs and tumbles in the (speed, angular velocity) state space; **C** velocity and orientation autocorrelations | ~10 s |
+| [`NB2_msd`](notebooks/NB2_msd.ipynb) | D | MSD of Brownian motion, run-and-tumble (constant and OU-driven tumble rate) and the biased random walk: equations of motion, analytic results and simulations, then the datasets | ~30 s |
+| [`NB3_smoothing_window`](notebooks/NB3_smoothing_window.ipynb) | A | Goes with NB1, part A: how the Savitzky–Golay window changes the velocity of a noisy swimming track (noise against blurred tumbles), and how to choose the window. It also writes the interactive explorer `NB3_smoothing_explorer.html` | ~5 s |
+| [`NB_extension`](notebooks/NB_extension.ipynb) | extra | The Lévy walk, and five random walks side by side (random, biased, run-and-tumble, smooth turner, Lévy) with matched parameters | ~30 s |
 
 Start with NB1, then NB2. Every notebook runs from top to bottom without changes.
 
@@ -18,8 +18,8 @@ Start with NB1, then NB2. Every notebook runs from top to bottom without changes
 You need [Miniconda](https://docs.conda.io/en/latest/miniconda.html) (or Anaconda) and git. In a terminal:
 
 ```bash
-git clone <repository address>
-cd <repository folder>
+git clone https://github.com/emonetlab/random_walk.git
+cd random_walk
 conda env create -f environment.yml
 conda activate mcdb5910
 python tools/install_kernel.py
@@ -34,7 +34,7 @@ The notebooks import the course package `motility` from the repository folder, s
 - `tools/install_kernel.py` registers the environment as a Jupyter kernel. On Windows, use it instead of plain `ipykernel install`: a kernel that starts without `conda activate` cannot find numpy's math library and stops at the first matrix operation (Windows error 0xc06d007f). The script adds the environment folders to the kernel's search path.
 - Without conda: `pip install -r requirements.txt` in a Python 3.12 environment.
 
-To check your installation, run `python -m pytest` (tests of the analysis code, ~10 s) and `python tools/run_notebooks.py` (runs every notebook, ~3 min). Both should report no failures.
+To check your installation, run `python -m pytest` (tests of the analysis code, a few seconds) and `python tools/run_notebooks.py` (runs every notebook, ~1 min). Both should report no failures.
 
 ## What is in this repository
 
