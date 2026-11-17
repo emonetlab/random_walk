@@ -13,8 +13,10 @@ How it is computed:
     5 um/s and turn it by 55-110 degrees. The path is integrated on a fine grid, then sampled at the frame rate,
     so position and velocity agree exactly. Independent Gaussian noise (NOISE_SD_UM) is added to x and y.
  2. For every window and polynomial order, the velocity error splits into a bias (the filter applied to the
-    noise-free path) and a noise term (sqrt(2) * sigma * the norm of the derivative coefficients). The total is
-    their quadrature sum; the best window is where it is smallest. The page re-does this in the browser for the
+    noise-free path) and a noise term (sigma * the norm of the derivative coefficients). Errors are RMS values per
+    velocity component, the convention of NB1, and the "raw difference" is the difference of consecutive frames,
+    as in NB1 (compared with the true velocity midway between the two frames). The total error is the quadrature
+    sum of bias and noise; the best window is where it is smallest. The page re-does this in the browser for the
     noise level chosen with the slider.
 
 To apply the method to your own recordings: measure the localization noise from cells that do not move, decide
@@ -90,22 +92,19 @@ def sg_velocity(x, y, window, order):
     )
 
 
-def raw_velocity(x, y):
-    return np.gradient(x, dt), np.gradient(y, dt)
-
-
 def velocity_rms_error(vx_est, vy_est):
-    squared = (vx_est - cell["vx"]) ** 2 + (vy_est - cell["vy"]) ** 2
+    # RMS error per velocity component (the two components are averaged).
+    squared = ((vx_est - cell["vx"]) ** 2 + (vy_est - cell["vy"]) ** 2) / 2
     return float(np.sqrt(np.mean(squared[interior])))
 
 
 def error_curve(order, noise_sd_um):
-    # Rows: window, bias, noise error, total error (µm/s).
+    # Rows: window, bias, noise error, total error (µm/s, per velocity component).
     rows = []
     for window in WINDOWS[WINDOWS > order]:
         bias = velocity_rms_error(*sg_velocity(cell["x"], cell["y"], window, order))
         coeffs = savgol_coeffs(window, order, deriv=1, delta=dt, use="dot")
-        noise = float(np.sqrt(2.0) * noise_sd_um * np.linalg.norm(coeffs))
+        noise = float(noise_sd_um * np.linalg.norm(coeffs))
         rows.append((window, bias, noise, np.hypot(bias, noise)))
     return np.array(rows)
 
@@ -133,10 +132,14 @@ EXPLORER_TEMPLATE = r'''<div id="__UID__">
 #__UID__ svg{display:block;width:100%;height:auto}
 #__UID__ svg text{font-family:inherit}
 #__UID__ .rd{font-size:12px;color:#52514e;min-height:16px;margin:2px 0 0;font-variant-numeric:tabular-nums}
+#__UID__ .def{font-size:13px;line-height:1.5;background:#f5f4f0;border-radius:8px;padding:10px 14px;margin:10px 0 4px}
+#__UID__ .def p{margin:0 0 6px}
+#__UID__ .def ul{margin:0;padding-left:18px}
+#__UID__ .def li{margin:0 0 5px}
 </style>
 <p data-out="msg" style="font-size:13px;color:#a32d2d;margin:0 0 10px">The explorer is not running. In JupyterLab, click <b>Trust HTML</b> in the toolbar above to let the page run its script. Or open smoothing_explorer.html in a web browser, which runs it right away.</p>
 <div class="row">
-<button data-act="raw">Raw difference</button><button data-act="best">Best window</button><button data-act="pipe">NB1 window</button><button data-act="smooth">Too smooth</button>
+<button data-act="raw">Raw difference</button><button data-act="best">Best window</button><button data-act="smooth">Too smooth</button>
 </div>
 <div class="row"><span class="lab">Window (frames)</span><input type="range" data-in="w" min="5" max="81" step="2" style="flex:1;min-width:160px"><span class="val" data-out="w"></span></div>
 <div class="row"><span class="lab">Polynomial order</span><select data-in="p"><option value="2">2</option><option value="4">4</option><option value="6">6</option></select>
@@ -150,6 +153,16 @@ EXPLORER_TEMPLATE = r'''<div id="__UID__">
 <div class="leg"><span><i class="sw" style="border-color:#0b0b0b"></i>True speed</span><span><i class="sw" style="border-color:#eb6834;border-top-style:dotted"></i>Raw difference</span><span><i class="sw" style="border-color:#2a78d6"></i>Current estimate</span></div>
 <svg data-chart="spd" viewBox="0 0 780 230" role="img" aria-label="True, raw and filtered speed over time"></svg>
 <p class="rd" data-out="rd-spd"></p>
+<div class="def">
+<p><b>Mean squared error of each velocity component = bias&sup2; + noise&sup2;</b> (the chart shows its square root, the RMS error, and the best window is its minimum). The raw difference is (<b>r</b><sub>n+1</sub> &minus; <b>r</b><sub>n</sub>) / &Delta;t, as in NB1.</p>
+<p><b>The fit:</b> around frame n, the w positions in the window are fitted by least squares with a polynomial of order p in the time s = t &minus; t<sub>n</sub>,<br>
+<b>r</b>(s) &asymp; <b>a</b><sub>0</sub> + <b>a</b><sub>1</sub> s + <b>a</b><sub>2</sub> s&sup2; + &hellip; + <b>a</b><sub>p</sub> s<sup>p</sup>.<br>
+The smoothed position is <b>a</b><sub>0</sub> and the velocity is the slope at the center, <b>v</b><sub>n</sub> = <b>a</b><sub>1</sub>. Because the fit is linear in the positions, this slope is a weighted sum <b>v</b><sub>n</sub> = &Sigma;<sub>i</sub> c<sub>i</sub> <b>r</b><sub>n+i</sub> over i = &minus;(w&minus;1)/2 &hellip; (w&minus;1)/2, with weights c<sub>i</sub> that depend only on w, p and &Delta;t.</p>
+<ul>
+<li><b>Bias:</b> the error of the fit on the noise-free path. The polynomial blurs tumbles, so the bias grows with the window.</li>
+<li><b>Noise:</b> the localization noise passed through the fit, &sigma; &radic;&Sigma;<sub>i</sub> c<sub>i</sub>&sup2; per component (for the raw difference, &radic;2 &sigma;/&Delta;t). Averaging more frames shrinks it.</li>
+</ul>
+</div>
 <p class="cap">Velocity error against window length</p>
 <div class="leg"><span><i class="sw" style="border-color:#eb6834;border-top-style:dashed"></i>Bias</span><span><i class="sw" style="border-color:#1baf7a;border-top-style:dotted"></i>Noise</span><span><i class="sw" style="border-color:#2a78d6"></i>Total RMS error</span><span><i class="sw" style="border-color:#898781;border-top-style:dashed"></i>Raw difference</span></div>
 <svg data-chart="err" viewBox="0 0 780 230" role="img" aria-label="Bias, noise and total velocity error against window length"></svg>
@@ -202,22 +215,23 @@ function chart(svg,o){
 const n=D.t.length,H=D.edge,fps=D.frameRate,dt=1/fps;
 const filt=(a,c)=>{const h=(c.length-1)/2,o=new Array(n).fill(null);for(let t=H;t<n-H;t++){let s=0;for(let i=0;i<c.length;i++)s+=c[i]*a[t-h+i];o[t]=s;}return o;};
 const rms=a=>{let s=0,k=0;for(const v of a){if(v!==null){s+=v;k++;}}return Math.sqrt(s/k);};
-const verr=(fx,fy)=>rms(fx.map((v,i)=>v===null?null:(v-D.vx[i])**2+(fy[i]-D.vy[i])**2));
-const CD=[-1/(2*dt),0,1/(2*dt)];
+// RMS error per velocity component. mid: the estimate sits midway between frames i and i+1 (raw difference).
+const verr=(fx,fy,mid)=>rms(fx.map((v,i)=>{if(v===null)return null;const tx=mid?(D.vx[i]+D.vx[i+1])/2:D.vx[i],ty=mid?(D.vy[i]+D.vy[i+1])/2:D.vy[i];return ((v-tx)**2+(fy[i]-ty)**2)/2;}));
+const fwd=a=>{const o=new Array(n).fill(null);for(let t=H;t<n-H;t++)o[t]=(a[t+1]-a[t])/dt;return o;};
 const st={w:D.defaults.window,p:D.defaults.order,s:D.defaults.noise,raw:false,best:D.defaults.window};
 const W=q('[data-in="w"]'),P=q('[data-in="p"]'),S=q('[data-in="s"]');
 W.min=D.wmin;W.max=D.wmax;
 W.value=st.w;P.value=String(st.p);S.value=st.s;
 const [P0,P1]=D.pathFrames;
 const IDLE="Move the pointer over the chart to read the values.";
-function curve(){return D.curves[st.p].map(([w,b,cn])=>{const nz=Math.SQRT2*st.s*cn;return{w,b,nz,tot:Math.hypot(b,nz)};});}
+function curve(){return D.curves[st.p].map(([w,b,cn])=>{const nz=st.s*cn;return{w,b,nz,tot:Math.hypot(b,nz)};});}
 function render(){
  const nx=D.x.map((v,i)=>v+st.s*D.ex[i]),ny=D.y.map((v,i)=>v+st.s*D.ey[i]);
  const cv=curve(),best=cv.reduce((a,b)=>b.tot<a.tot?b:a);st.best=best.w;
- const rx=filt(nx,CD),ry=filt(ny,CD),rawE=verr(rx,ry);
+ const rx=fwd(nx),ry=fwd(ny),rawE=verr(rx,ry,true);
  let fx=rx,fy=ry,px=null,py=null;
  if(!st.raw){const c=D.coeffs[st.p][st.w];fx=filt(nx,c[1]);fy=filt(ny,c[1]);px=filt(nx,c[0]);py=filt(ny,c[0]);}
- const curE=verr(fx,fy);
+ const curE=verr(fx,fy,st.raw);
  q('[data-out="w"]').textContent=st.raw?"raw difference":st.w+" ("+(st.w/fps).toFixed(2)+" s)";
  q('[data-out="s"]').textContent=st.s.toFixed(2);
  q('[data-out="raw"]').textContent=rawE.toFixed(2)+" µm/s";
@@ -225,7 +239,7 @@ function render(){
  q('[data-out="best"]').textContent=best.w+" frames · "+(best.w/fps).toFixed(2)+" s";
  const rs=rx.map((v,i)=>v===null?null:Math.hypot(v,ry[i])),es=fx.map((v,i)=>v===null?null:Math.hypot(v,fy[i]));
  const pts=a=>a.map((v,i)=>v===null?null:[D.t[i],v]);
- const spdSeries=[{pts:pts(rs),color:C.org,width:1,dash:"2 2"},{pts:pts(D.speed),color:C.ink,width:2}];
+ const spdSeries=[{pts:rs.map((v,i)=>v===null?null:[D.t[i]+dt/2,v]),color:C.org,width:1,dash:"2 2"},{pts:pts(D.speed),color:C.ink,width:2}];
  if(!st.raw)spdSeries.push({pts:pts(es),color:C.blue,width:2});
  const top=Math.ceil(Math.max(30,...rs.filter(v=>v!==null))/5)*5;
  chart(q('[data-chart="spd"]'),{x:[D.t[0],D.t[n-1]],y:[0,top],nx:10,xl:"time (s)",yl:"speed (µm/s)",series:spdSeries,
@@ -239,7 +253,7 @@ function render(){
   {pts:cv.map(o=>[o.w,o.nz]),color:C.aq,dash:"2 3"},
   {pts:cv.map(o=>[o.w,o.tot]),color:C.blue}];
  if(!st.raw&&cur)errSeries.push({dot:true,pts:[[st.w,cur.tot]],color:C.blue,r:6,ring:"#ffffff"});
- chart(q('[data-chart="err"]'),{x:[D.wmin,D.wmax],y:[0,Math.ceil(Math.max(rawE,cv[cv.length-1].tot)*1.1)],xl:"window (frames)",yl:"velocity RMS error (µm/s)",series:errSeries,
+ chart(q('[data-chart="err"]'),{x:[D.wmin,D.wmax],y:[0,Math.ceil(Math.max(rawE,cv[cv.length-1].tot)*1.1)],xl:"window (frames)",yl:"RMS error per component (µm/s)",series:errSeries,
   hover:{out:q('[data-out="rd-err"]'),idle:IDLE,fn:xv=>{const o=cv.reduce((a,b)=>Math.abs(b.w-xv)<Math.abs(a.w-xv)?b:a);
    return{x:o.w,text:"window "+o.w+" frames ("+(o.w/fps).toFixed(2)+" s) · bias "+o.b.toFixed(2)+" · noise "+o.nz.toFixed(2)+" · total "+o.tot.toFixed(2)+" µm/s"};}}});
  const seg=(a,b)=>a.slice(P0,P1).map((v,i)=>[v,b[i+P0]]);
@@ -256,7 +270,6 @@ S.oninput=()=>{st.s=+S.value;render();};
 root.querySelectorAll("button").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
  if(a==="raw"){st.raw=true;}
  else if(a==="best"){st.raw=false;render();setW(st.best);}
- else if(a==="pipe"){st.raw=false;setW(D.defaults.window);}
  else{st.raw=false;setW(D.defaults.tooSmooth);}
  render();});
 render();
@@ -297,10 +310,8 @@ explorer_data = {
 }
 for order in ORDERS:
     order_curve = error_curve(order, 1.0)
-    # With a noise level of 1 µm, column 2 is sqrt(2) times the coefficient norm.
-    explorer_data["curves"][order] = [
-        [int(w), round(float(b), 6), round(float(nz) / np.sqrt(2.0), 8)] for w, b, nz, _ in order_curve
-    ]
+    # With a noise level of 1 µm, column 2 is the norm of the derivative coefficients.
+    explorer_data["curves"][order] = [[int(w), round(float(b), 6), round(float(nz), 8)] for w, b, nz, _ in order_curve]
     explorer_data["coeffs"][order] = {
         int(w): [coefficient_list(int(w), order, 0), coefficient_list(int(w), order, 1)]
         for w in WINDOWS[WINDOWS > order]
