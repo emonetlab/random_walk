@@ -9,3 +9,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Experimental data: downloaded by each student, never committed
+data/experimental/*
+!data/experimental/README.txt

@@ -6,6 +6,7 @@ Usage (from the random_walk folder, in the mcdb5910 environment):
     python tools/run_notebooks.py --save               # also write the outputs back into each notebook
 
 Each notebook runs in its own folder, so relative data paths behave as they do for students.
+Notebooks that need downloaded data files (NEEDS_DATA) are skipped when the files are missing.
 The script prints the run time of each notebook and any error.
 It exits with status 1 if a notebook stops with an error.
 """
@@ -19,6 +20,9 @@ from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# Notebooks that need downloaded data files (not in the repository): skipped if their folder holds no .mat file.
+NEEDS_DATA = {"hands_on_real_tracks.ipynb": ROOT / "data" / "experimental"}
 
 
 def run(path, kernel, timeout, save):
@@ -49,6 +53,10 @@ def main():
     paths = [p.resolve() for p in args.notebooks] or sorted((ROOT / "notebooks").glob("*.ipynb"))
     ok = True
     for path in paths:
+        needed = NEEDS_DATA.get(path.name)
+        if needed is not None and not any(needed.glob("*.mat")):
+            print(f"SKIP {path.relative_to(ROOT)}  (no .mat file in {needed.relative_to(ROOT)}, see its README.txt)")
+            continue
         elapsed, error = run(path, args.kernel, args.timeout, args.save)
         ok &= error is None
         print(f"{'OK  ' if error is None else 'FAIL'} {path.relative_to(ROOT)}  ({elapsed:.0f} s)")
