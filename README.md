@@ -47,7 +47,7 @@ To check your installation, run `python -m pytest` (tests of the analysis code, 
 
 1. **Install and check the environment** as described above (`conda env create`, `install_kernel.py`, and `python -m pytest` reports no failures).
 
-2. **Download the three data files** from the course Dropbox folder `motility_module/data` (the link is given in class):
+2. **Download the three data files** from the course Dropbox folder `motility_module/data`. The link is announced on the Canvas course website (and restated in class):
 
    - `dataset_1.mat` (44 MB)
    - `dataset_2.mat` (45 MB)
@@ -112,7 +112,7 @@ Each dataset has three files in `data/synthetic/`:
 
 ### The experimental datasets
 
-Three real tracking experiments, `dataset_1.mat`, `dataset_2.mat` and `dataset_3.mat` (44, 45 and 3 MB): two species of bacteria in two environments, which ones is given in class. They are not in the repository; [The hands-on notebook: real data](#the-hands-on-notebook-real-data) says where to download them and where to put them (`data/experimental/`).
+Three real tracking experiments, `dataset_1.mat`, `dataset_2.mat` and `dataset_3.mat` (44, 45 and 3 MB): two species of bacteria in two environments; which ones is announced on the Canvas course website and in class. They are not in the repository; [The hands-on notebook: real data](#the-hands-on-notebook-real-data) says where to download them and where to put them (`data/experimental/`).
 
 Each file holds one MATLAB variable, `tracks`: a struct array with one element per cell and the fields `x`, `y` (positions in µm) and `time` (s), one value per frame. `NaN` marks frames in which the tracker lost the cell. `motility.io.load_mat_tracks` converts a file to the table format above (`frame` counts frames of the whole movie) and measures the metadata from the data; the hands-on notebook shows how. Measured from the files:
 
