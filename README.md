@@ -5,14 +5,14 @@
 Everything is in the folder [`notebooks/`](notebooks/). In class (MCDB 5910, Day 1, section 3, "Trajectory analysis") we work through **NB1** and **NB2**:
 
 - **NB1** goes from tracks to behavior: speeds from positions, the effect of localization noise and smoothing, runs and tumbles in the (speed, angular velocity) space, and how long a cell remembers its direction.
-- **NB2** goes from behavior to displacement: the MSD of Brownian motion, run-and-tumble and the biased random walk, derived analytically, simulated, and then measured in the datasets.
+- **NB2** goes from behavior to displacement: the MSD of Brownian motion, run-and-tumble and the biased random walk, derived analytically and simulated.
 
 NB3 is optional extra reading. The **hands-on notebook** is for working on your own after class: it opens three real experiments, whose data files you download separately (see [The hands-on notebook: real data](#the-hands-on-notebook-real-data)). Every notebook runs from top to bottom without changes.
 
 | Notebook | Part | What you learn | Run time |
 |---|---|---|---|
 | [`NB1_tracks_to_states`](notebooks/NB1_tracks_to_states.ipynb) | A, B, C | **A** speeds from positions, and how localization noise and smoothing affect them; **B** runs and tumbles in the (speed, angular velocity) state space; **C** the orientation autocorrelation and the persistence time | ~10 s |
-| [`NB2_msd`](notebooks/NB2_msd.ipynb) | D | MSD of Brownian motion, run-and-tumble (constant and OU-driven tumble rate) and the biased random walk: equations of motion, analytic results and simulations, then the datasets | ~30 s |
+| [`NB2_msd`](notebooks/NB2_msd.ipynb) | D | MSD of Brownian motion, run-and-tumble (constant and OU-driven tumble rate) and the biased random walk: equations of motion, analytic results and simulations | ~30 s |
 | [`NB3_extension`](notebooks/NB3_extension.ipynb) | extra | The Lévy walk, and five random walks side by side (random, biased, run-and-tumble, smooth turner, Lévy) with matched parameters | ~30 s |
 | [`hands_on_real_tracks`](notebooks/hands_on_real_tracks.ipynb) | hands-on | Opens real tracking experiments (three MATLAB `.mat` files): what is in each file, loading one, conversion to the course table, metadata read off the data, and trajectory views, then suggestions for your own analysis. Needs the downloaded data files, see below | ~30 s |
 
@@ -104,9 +104,9 @@ Each dataset has three files in `data/synthetic/`:
 
 | Dataset | Cells | Used in |
 |---|---|---|
-| `brownian` | non-swimming cells (Brownian motion, D = 0.35 µm²/s) | NB2 |
-| `run_tumble` | *E. coli*-like run-and-tumble swimmers: 25 ± 4 µm/s, 1 tumble per second, tumbles of 0.15 s, turn angles 68 ± 36° | NB1, NB2 |
-| `biased_run_tumble` | the same swimmers in an attractant gradient toward +x | NB2 |
+| `brownian` | non-swimming cells (Brownian motion, D = 0.35 µm²/s) | NB2, question 3 (measuring D and the localization noise) |
+| `run_tumble` | *E. coli*-like run-and-tumble swimmers: 25 ± 4 µm/s, 1 tumble per second, tumbles of 0.15 s, turn angles 68 ± 36° | NB1; NB2, question 4 |
+| `biased_run_tumble` | the same swimmers in an attractant gradient toward +x | NB2, question 4 (detecting the bias) |
 
 **How the data are made** (`tools/make_synthetic_data.py`): 400 cells per dataset are simulated for 40 s at 30 frames per second (`motility.simulate`). Each track is then cut to a random duration (mean 10 s), because real cells leave the focal plane, and every position gets a localization error of 0.2 µm (`motility.simulate.as_dataset`). The random seeds are fixed, so the script makes identical files every time.
 
